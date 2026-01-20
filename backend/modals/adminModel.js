@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
-// User Schema - For regular employees
-const userSchema = new mongoose.Schema(
+// Admin Schema - Separate schema for administrators
+const adminSchema = new mongoose.Schema(
   {
     // Personal Information
     firstName: {
@@ -39,35 +39,42 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Role
+    // Role (fixed as admin)
     role: {
       type: String,
-      enum: ["employee"],
-      default: "employee",
-    },
-
-    // Manager Reference (employees report to managers)
-    manager: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Manager",
-      default: null,
+      enum: ["admin"],
+      default: "admin",
     },
 
     // Account Status
     status: {
       type: String,
       enum: ["Active", "Pending", "Inactive"],
-      default: "Pending",
+      default: "Active",
     },
 
-    // Task Statistics (for tracking purposes)
-    completedTasks: {
-      type: Number,
-      default: 0,
-    },
-    totalTasks: {
-      type: Number,
-      default: 0,
+    // Admin Permissions (for granular access control)
+    permissions: {
+      manageUsers: {
+        type: Boolean,
+        default: true,
+      },
+      manageManagers: {
+        type: Boolean,
+        default: true,
+      },
+      manageTasks: {
+        type: Boolean,
+        default: true,
+      },
+      viewReports: {
+        type: Boolean,
+        default: true,
+      },
+      manageSettings: {
+        type: Boolean,
+        default: true,
+      },
     },
 
     // Login tracking
@@ -80,5 +87,17 @@ const userSchema = new mongoose.Schema(
 );
 
 // Virtual for full name
+adminSchema.virtual("name").get(function () {
+  return `${this.firstName} ${this.lastName}`;
+});
 
-export const User = mongoose.model("User", userSchema);
+// Virtual for avatar initials
+adminSchema.virtual("initials").get(function () {
+  return `${this.firstName[0]}${this.lastName[0]}`.toUpperCase();
+});
+
+// Ensure virtuals are included in JSON output
+adminSchema.set("toJSON", { virtuals: true });
+adminSchema.set("toObject", { virtuals: true });
+
+export const Admin = mongoose.model("Admin", adminSchema);

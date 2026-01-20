@@ -1,5 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
+// Auth
+import Login from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+
 // Admin
 import AdminLayout from "../layouts/admin/AdminLayout";
 import AdminDashboard from "../pages/admin/Dashboard";
@@ -48,11 +53,22 @@ import NotFound from "../pages/common/NotFound";
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Redirect root to admin dashboard */}
-      <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+      {/* Auth Routes - Public */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-      {/* Admin Routes */}
-      <Route path="/admin" element={<AdminLayout />}>
+      {/* Redirect root to login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Admin Routes - Protected */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
 
@@ -83,8 +99,15 @@ const AppRoutes = () => {
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 
-      {/* Manager Routes */}
-      <Route path="/manager" element={<ManagerLayout />}>
+      {/* Manager Routes - Protected */}
+      <Route
+        path="/manager"
+        element={
+          <ProtectedRoute allowedRoles={["manager"]}>
+            <ManagerLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/manager/dashboard" replace />} />
         <Route path="dashboard" element={<ManagerDashboard />} />
 
@@ -107,8 +130,15 @@ const AppRoutes = () => {
         <Route path="settings" element={<ManagerSettings />} />
       </Route>
 
-      {/* Employee Routes */}
-      <Route path="/employee" element={<EmployeeLayout />}>
+      {/* Employee Routes - Protected */}
+      <Route
+        path="/employee"
+        element={
+          <ProtectedRoute allowedRoles={["employee"]}>
+            <EmployeeLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/employee/dashboard" replace />} />
         <Route path="dashboard" element={<EmployeeDashboard />} />
 

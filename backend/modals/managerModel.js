@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
-// User Schema - For regular employees
-const userSchema = new mongoose.Schema(
+// Manager Schema - For managers who oversee employees
+const managerSchema = new mongoose.Schema(
   {
     // Personal Information
     firstName: {
@@ -42,15 +42,8 @@ const userSchema = new mongoose.Schema(
     // Role
     role: {
       type: String,
-      enum: ["employee"],
-      default: "employee",
-    },
-
-    // Manager Reference (employees report to managers)
-    manager: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Manager",
-      default: null,
+      enum: ["manager"],
+      default: "manager",
     },
 
     // Account Status
@@ -60,12 +53,16 @@ const userSchema = new mongoose.Schema(
       default: "Pending",
     },
 
-    // Task Statistics (for tracking purposes)
-    completedTasks: {
-      type: Number,
-      default: 0,
-    },
-    totalTasks: {
+    // Team Members (employees reporting to this manager)
+    teamMembers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    // Team Statistics
+    teamSize: {
       type: Number,
       default: 0,
     },
@@ -79,6 +76,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Virtual for full name
+// Ensure virtuals are included in JSON output
+managerSchema.set("toJSON", { virtuals: true });
+managerSchema.set("toObject", { virtuals: true });
 
-export const User = mongoose.model("User", userSchema);
+export const Manager = mongoose.model("Manager", managerSchema);
