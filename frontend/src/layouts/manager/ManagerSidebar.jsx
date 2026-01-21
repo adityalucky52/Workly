@@ -1,4 +1,5 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import useAuthStore from "../../store/authStore";
 import {
   Sidebar,
   SidebarContent,
@@ -99,8 +100,30 @@ const settingsItems = [
 
 const ManagerSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
 
   const isActive = (path) => location.pathname === path;
+
+  // Get user initials for avatar
+  const getInitials = () => {
+    if (!user) return "MG";
+    const first = user.firstName?.charAt(0) || "";
+    const last = user.lastName?.charAt(0) || "";
+    return (first + last).toUpperCase() || "MG";
+  };
+
+  // Get full name
+  const getFullName = () => {
+    if (!user) return "Manager";
+    return `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Manager";
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <Sidebar variant="inset" className="rounded-2xl">
@@ -231,15 +254,20 @@ const ManagerSidebar = () => {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src="/avatars/manager.jpg" alt="Manager" />
+                    <AvatarImage
+                      src={user?.avatar || "/avatars/manager.jpg"}
+                      alt={getFullName()}
+                    />
                     <AvatarFallback className="rounded-lg bg-blue-600 text-white">
-                      MG
+                      {getInitials()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Jane Smith</span>
+                    <span className="truncate font-semibold">
+                      {getFullName()}
+                    </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      manager@example.com
+                      {user?.email || "manager@example.com"}
                     </span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
@@ -256,7 +284,10 @@ const ManagerSidebar = () => {
                   Account Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                  onClick={handleLogout}
+                >
                   <LogOut className="mr-2 size-4" />
                   Log out
                 </DropdownMenuItem>

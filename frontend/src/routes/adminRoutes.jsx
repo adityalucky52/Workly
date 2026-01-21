@@ -5,7 +5,6 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 import AdminLayout from "../layouts/admin/AdminLayout";
 import AdminDashboard from "../pages/admin/Dashboard";
 import AllUsers from "../pages/admin/users/AllUsers";
-import CreateUser from "../pages/admin/users/CreateUser";
 import UserDetails from "../pages/admin/users/UserDetails";
 import AssignManager from "../pages/admin/users/AssignManager";
 import ManagerList from "../pages/admin/managers/ManagerList";
@@ -46,10 +45,6 @@ export const adminRoutes = {
     {
       path: "users",
       element: <AllUsers />,
-    },
-    {
-      path: "users/create",
-      element: <CreateUser />,
     },
     {
       path: "users/:id",
