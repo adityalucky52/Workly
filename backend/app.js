@@ -10,6 +10,7 @@ import adminRouter from "./routes/admin.routes.js";
 import managerRouter from "./routes/manager.routes.js";
 import employeeRouter from "./routes/employee.routes.js";
 import profileRouter from "./routes/profile.routes.js";
+import groupRouter from "./routes/group.routes.js";
 import userRouter from "./routes/user.Routes.js";
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/api/manager", managerRouter);
 app.use("/api/employee", employeeRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/user", userRouter);
+app.use("/api/groups", groupRouter);
 
 // Error handling middleware
 app.use(errorMiddleware);

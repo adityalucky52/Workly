@@ -1,32 +1,147 @@
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
-import { Avatar, AvatarFallback } from "../../../components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../../components/ui/avatar";
 import { Progress } from "../../../components/ui/progress";
-import { TrendingUp, CheckCircle2, Clock, Target } from "lucide-react";
-
-const teamPerformance = [
-  { id: 1, name: "John Doe", completed: 28, onTime: 25, efficiency: 89 },
-  { id: 2, name: "Emily Davis", completed: 32, onTime: 30, efficiency: 94 },
-  { id: 3, name: "Alex Wilson", completed: 24, onTime: 20, efficiency: 83 },
-  { id: 4, name: "Sam Taylor", completed: 35, onTime: 33, efficiency: 94 },
-  { id: 5, name: "Lisa Brown", completed: 21, onTime: 18, efficiency: 86 },
-];
+import {
+  TrendingUp,
+  CheckCircle2,
+  Clock,
+  Target,
+  Loader2,
+  Users,
+} from "lucide-react";
+import { managerAPI } from "../../../services/api";
 
 const TeamPerformance = () => {
-  const totalCompleted = teamPerformance.reduce(
-    (sum, m) => sum + m.completed,
-    0,
-  );
-  const avgEfficiency = Math.round(
-    teamPerformance.reduce((sum, m) => sum + m.efficiency, 0) /
-      teamPerformance.length,
-  );
+  const [loading, setLoading] = useState(true);
+  const [teamStats, setTeamStats] = useState([]);
+  const [summary, setSummary] = useState({
+    totalCompleted: 0,
+    avgEfficiency: 0,
+    onTimeRate: 0,
+    topPerformer: null,
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // Fetch team members and assigned tasks
+        const [teamRes, taskRes] = await Promise.all([
+          managerAPI.getTeamMembers(),
+          managerAPI.getAssignedTasks({ limit: 1000 }),
+        ]);
+
+        if (teamRes.data.success && taskRes.data.success) {
+          const members = teamRes.data.data;
+          const tasks = taskRes.data.data;
+
+          const memberStats = members
+            .map((member) => {
+              const memberTasks = tasks.filter(
+                (t) => t.assignee?._id === member._id,
+              );
+
+              const completedTasks = memberTasks.filter(
+                (t) => t.status === "Completed",
+              );
+              const completedCount = completedTasks.length;
+
+              // On Time Calculation
+              const onTimeCount = completedTasks.filter((t) => {
+                if (!t.dueDate) return true; // Assume on time if no due date????? Or ignore? Let's assume on time.
+                return new Date(t.updatedAt) <= new Date(t.dueDate);
+              }).length;
+
+              // Efficiency: (On Time / Total Completed) * 100
+              // If no completed tasks, efficiency is 0? Or 100? Let's say 0 for now to avoid top performer being someone with 0 tasks.
+              const efficiency =
+                completedCount > 0
+                  ? Math.round((onTimeCount / completedCount) * 100)
+                  : 0;
+
+              // To be displayed/used
+              return {
+                id: member._id,
+                name: `${member.firstName} ${member.lastName}`,
+                avatar: member.avatar,
+                completed: completedCount,
+                onTime: onTimeCount,
+                efficiency,
+              };
+            })
+            .sort(
+              (a, b) =>
+                b.efficiency - a.efficiency || b.completed - a.completed,
+            );
+
+          setTeamStats(memberStats);
+
+          // Summary Stats
+          const totalCompleted = memberStats.reduce(
+            (sum, m) => sum + m.completed,
+            0,
+          );
+          const totalOnTime = memberStats.reduce((sum, m) => sum + m.onTime, 0);
+
+          // Avg Efficiency of the team
+          const activeMembers = memberStats.filter((m) => m.completed > 0);
+          const avgEfficiency =
+            activeMembers.length > 0
+              ? Math.round(
+                  activeMembers.reduce((sum, m) => sum + m.efficiency, 0) /
+                    activeMembers.length,
+                )
+              : 0;
+
+          // Global On-Time Rate
+          const onTimeRate =
+            totalCompleted > 0
+              ? Math.round((totalOnTime / totalCompleted) * 100)
+              : 0;
+
+          const topPerformer =
+            memberStats.length > 0 && memberStats[0].completed > 0
+              ? memberStats[0]
+              : null;
+
+          setSummary({
+            totalCompleted,
+            avgEfficiency,
+            onTimeRate,
+            topPerformer,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch team performance:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">
+          Calculating performance...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -48,8 +163,8 @@ const TeamPerformance = () => {
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCompleted}</div>
-            <p className="text-xs text-muted-foreground">tasks this month</p>
+            <div className="text-2xl font-bold">{summary.totalCompleted}</div>
+            <p className="text-xs text-muted-foreground">tasks all time</p>
           </CardContent>
         </Card>
         <Card>
@@ -61,7 +176,7 @@ const TeamPerformance = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {avgEfficiency}%
+              {summary.avgEfficiency}%
             </div>
             <p className="text-xs text-muted-foreground">team average</p>
           </CardContent>
@@ -72,14 +187,7 @@ const TeamPerformance = () => {
             <Clock className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round(
-                (teamPerformance.reduce((sum, m) => sum + m.onTime, 0) /
-                  totalCompleted) *
-                  100,
-              )}
-              %
-            </div>
+            <div className="text-2xl font-bold">{summary.onTimeRate}%</div>
             <p className="text-xs text-muted-foreground">delivered on time</p>
           </CardContent>
         </Card>
@@ -89,62 +197,81 @@ const TeamPerformance = () => {
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">Sam Taylor</div>
-            <p className="text-xs text-muted-foreground">94% efficiency</p>
+            <div
+              className="text-lg font-bold truncate"
+              title={summary.topPerformer?.name}
+            >
+              {summary.topPerformer ? summary.topPerformer.name : "N/A"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {summary.topPerformer
+                ? `${summary.topPerformer.efficiency}% efficiency`
+                : "No data"}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Performance Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {teamPerformance.map((member) => (
-          <Card key={member.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4 mb-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback>
-                    {member.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{member.name}</p>
-                  <Badge
-                    variant={member.efficiency >= 90 ? "default" : "secondary"}
-                  >
-                    {member.efficiency >= 90 ? "Top Performer" : "Good"}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>Efficiency</span>
-                  <span className="font-bold">{member.efficiency}%</span>
-                </div>
-                <Progress value={member.efficiency} className="h-2" />
-
-                <div className="grid grid-cols-2 gap-4 pt-2">
+      {teamStats.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>No team data available for performance review.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {teamStats.map((member) => (
+            <Card key={member.id}>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={member.avatar} />
+                    <AvatarFallback>
+                      {member.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
-                    <p className="text-2xl font-bold text-green-600">
-                      {member.completed}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Completed</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {member.onTime}
-                    </p>
-                    <p className="text-xs text-muted-foreground">On Time</p>
+                    <p className="font-semibold">{member.name}</p>
+                    <Badge
+                      variant={
+                        member.efficiency >= 90 ? "default" : "secondary"
+                      }
+                    >
+                      {member.efficiency >= 90 ? "Top Performer" : "Good"}
+                    </Badge>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span>Efficiency</span>
+                    <span className="font-bold">{member.efficiency}%</span>
+                  </div>
+                  <Progress value={member.efficiency} className="h-2" />
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <p className="text-2xl font-bold text-green-600">
+                        {member.completed}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Completed</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {member.onTime}
+                      </p>
+                      <p className="text-xs text-muted-foreground">On Time</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

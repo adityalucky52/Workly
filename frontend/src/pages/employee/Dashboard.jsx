@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Card,
@@ -24,53 +25,98 @@ import {
   AlertCircle,
   ArrowUpRight,
   Target,
+  Loader2,
 } from "lucide-react";
-
-const stats = [
-  { title: "Active Tasks", value: "5", icon: ListTodo, color: "text-blue-600" },
-  {
-    title: "Completed",
-    value: "28",
-    icon: CheckCircle2,
-    color: "text-green-600",
-  },
-  { title: "In Progress", value: "3", icon: Clock, color: "text-yellow-600" },
-  { title: "Overdue", value: "1", icon: AlertCircle, color: "text-red-600" },
-];
-
-const tasks = [
-  {
-    id: 1,
-    title: "Complete API documentation",
-    priority: "High",
-    dueDate: "2024-01-30",
-    status: "In Progress",
-  },
-  {
-    id: 2,
-    title: "Write unit tests",
-    priority: "Medium",
-    dueDate: "2024-01-28",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    title: "Fix login bug",
-    priority: "High",
-    dueDate: "2024-01-25",
-    status: "In Progress",
-  },
-  {
-    id: 4,
-    title: "Update user profile page",
-    priority: "Low",
-    dueDate: "2024-02-01",
-    status: "Pending",
-  },
-];
+import { employeeAPI, adminAPI } from "../../services/api";
 
 const Dashboard = () => {
-  const completionRate = 85;
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    tasks: {
+      total: 0,
+      pending: 0,
+      completed: 0,
+      inProgress: 0,
+      overdue: 0,
+    },
+    completionRate: 0,
+    recentTasks: [],
+    upcomingDeadlines: [],
+  });
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+        // Fetch current user and dashboard stats in parallel
+        const [userRes, statsRes] = await Promise.all([
+          adminAPI.getCurrentUser(),
+          employeeAPI.getDashboardStats(),
+        ]);
+
+        if (userRes.data.success) {
+          setCurrentUser(userRes.data.data);
+        }
+
+        if (statsRes.data.success) {
+          setDashboardData(statsRes.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading dashboard...</span>
+      </div>
+    );
+  }
+
+  const { tasks, completionRate, recentTasks } = dashboardData;
+
+  const stats = [
+    {
+      title: "Active Tasks",
+      value: tasks.total - tasks.completed,
+      icon: ListTodo,
+      color: "text-blue-600",
+    },
+    {
+      title: "Completed",
+      value: tasks.completed,
+      icon: CheckCircle2,
+      color: "text-green-600",
+    },
+    {
+      title: "In Progress",
+      value: tasks.inProgress,
+      icon: Clock,
+      color: "text-yellow-600",
+    },
+    {
+      title: "Overdue",
+      value: tasks.overdue,
+      icon: AlertCircle,
+      color: "text-red-600",
+    },
+  ];
+
+  const getStatusBadge = (status) => {
+    let variant = "secondary";
+    if (status === "Completed") variant = "default"; // or green custom
+    if (status === "In Progress") variant = "default";
+    if (status === "Overdue") variant = "destructive";
+
+    return <Badge variant={variant}>{status}</Badge>;
+  };
 
   return (
     <div className="space-y-6">
@@ -78,7 +124,8 @@ const Dashboard = () => {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back, John! Here's your task overview.
+          Welcome back, {currentUser?.firstName || "Employee"}! Here's your task
+          overview.
         </p>
       </div>
 
@@ -108,18 +155,19 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
-              Weekly Progress
+              Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-3xl font-bold">{completionRate}%</span>
-                <Badge variant="secondary">This week</Badge>
+                <Badge variant="secondary">All Time</Badge>
               </div>
               <Progress value={completionRate} className="h-3" />
               <p className="text-sm text-muted-foreground">
-                You've completed 17 out of 20 tasks this week. Great job!
+                You've completed {tasks.completed} out of {tasks.total} tasks
+                assigned to you.
               </p>
             </div>
           </CardContent>
@@ -131,7 +179,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>My Tasks</CardTitle>
-                <CardDescription>Your current assignments</CardDescription>
+                <CardDescription>Recently assigned tasks</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/employee/tasks" className="flex items-center gap-1">
@@ -142,48 +190,50 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Task</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell className="font-medium">{task.title}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          task.priority === "High"
-                            ? "destructive"
-                            : task.priority === "Medium"
-                              ? "default"
-                              : "secondary"
-                        }
-                      >
-                        {task.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{task.dueDate}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          task.status === "In Progress"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {task.status}
-                      </Badge>
-                    </TableCell>
+            {recentTasks.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <p>No recent tasks found.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recentTasks.map((task) => (
+                    <TableRow key={task._id}>
+                      <TableCell className="font-medium">
+                        {task.title}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            task.priority === "High"
+                              ? "destructive"
+                              : task.priority === "Medium"
+                                ? "default"
+                                : "secondary"
+                          }
+                        >
+                          {task.priority || "Medium"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {task.dueDate
+                          ? new Date(task.dueDate).toLocaleDateString()
+                          : "-"}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(task.status)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -198,9 +248,11 @@ const Dashboard = () => {
             <Button asChild>
               <Link to="/employee/tasks">View All Tasks</Link>
             </Button>
+            {/* 
             <Button variant="outline" asChild>
               <Link to="/employee/tasks/update">Update Task Status</Link>
             </Button>
+             */}
             <Button variant="outline" asChild>
               <Link to="/employee/activity/history">View History</Link>
             </Button>

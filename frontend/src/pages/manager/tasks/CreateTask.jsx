@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Card,
@@ -18,17 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { ArrowLeft, Save } from "lucide-react";
-
-const teamMembers = [
-  { id: 1, name: "John Doe" },
-  { id: 2, name: "Emily Davis" },
-  { id: 3, name: "Alex Wilson" },
-  { id: 4, name: "Sam Taylor" },
-];
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { managerAPI } from "../../../services/api";
+// import { toast } from "sonner"; // Assuming sonner is used for toasts, if not, simple alert or check existing usage
 
 const CreateTask = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [fetchingTeam, setFetchingTeam] = useState(true);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -37,14 +36,52 @@ const CreateTask = () => {
     dueDate: "",
   });
 
+  useEffect(() => {
+    // Fetch team members for assignment
+    const fetchTeam = async () => {
+      try {
+        const response = await managerAPI.getTeamMembers();
+        if (response.data.success) {
+          setTeamMembers(response.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch team members:", error);
+      } finally {
+        setFetchingTeam(false);
+      }
+    };
+    fetchTeam();
+  }, []);
+
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Creating task:", formData);
-    navigate("/manager/tasks/assigned");
+
+    try {
+      setLoading(true);
+      // Backend expects: title, description, assignee (userId), priority, dueDate
+      const payload = {
+        ...formData,
+        // If assignee is empty string, send null or omit? API likely needs assignee.
+        assignee: formData.assignee || undefined,
+      };
+
+      const response = await managerAPI.createTask(payload);
+
+      if (response.data.success) {
+        // Redirect to Assigned Tasks
+        navigate("/manager/tasks/assigned");
+      }
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      // Ideally show toast error here
+      alert("Failed to create task. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -111,17 +148,21 @@ const CreateTask = () => {
                     <Select
                       value={formData.assignee}
                       onValueChange={(value) => handleChange("assignee", value)}
+                      disabled={fetchingTeam}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select team member" />
+                        <SelectValue
+                          placeholder={
+                            fetchingTeam
+                              ? "Loading team..."
+                              : "Select team member"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {teamMembers.map((member) => (
-                          <SelectItem
-                            key={member.id}
-                            value={member.id.toString()}
-                          >
-                            {member.name}
+                          <SelectItem key={member._id} value={member._id}>
+                            {member.firstName} {member.lastName}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -132,14 +173,15 @@ const CreateTask = () => {
                     <Select
                       value={formData.priority}
                       onValueChange={(value) => handleChange("priority", value)}
+                      required
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select priority" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Low">Low</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -164,9 +206,18 @@ const CreateTask = () => {
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button type="submit" className="w-full">
-                  <Save className="mr-2 h-4 w-4" />
-                  Create Task
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Create Task
+                    </>
+                  )}
                 </Button>
                 <Button
                   type="button"

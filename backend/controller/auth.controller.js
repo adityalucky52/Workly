@@ -13,7 +13,7 @@ const generateToken = (id, role) => {
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax", // Use lax in development for cross-port requests
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
@@ -180,6 +180,22 @@ export const loginManager = async (req, res, next) => {
         .json({ success: false, message: "Invalid email or password" });
     }
 
+    // Check account status
+    if (manager.status === "Pending") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your account is pending approval. Please wait for admin approval.",
+      });
+    }
+
+    if (manager.status === "Inactive") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been deactivated. Please contact admin.",
+      });
+    }
+
     // Update last login
     manager.lastLogin = new Date();
     await manager.save();
@@ -272,6 +288,22 @@ export const loginEmployee = async (req, res, next) => {
       return res
         .status(400)
         .json({ success: false, message: "Invalid email or password" });
+    }
+
+    // Check account status
+    if (user.status === "Pending") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your account is pending approval. Please wait for admin approval.",
+      });
+    }
+
+    if (user.status === "Inactive") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been deactivated. Please contact admin.",
+      });
     }
 
     // Update last login

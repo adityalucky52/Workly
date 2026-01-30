@@ -23,6 +23,7 @@ const seedData = {
       email: "rahul.manager@workly.com",
       phone: "9876543211",
       password: "manager123",
+      status: "Active",
     },
     {
       firstName: "Priya",
@@ -30,6 +31,7 @@ const seedData = {
       email: "priya.manager@workly.com",
       phone: "9876543212",
       password: "manager123",
+      status: "Active",
     },
     {
       firstName: "Amit",
@@ -37,6 +39,23 @@ const seedData = {
       email: "amit.manager@workly.com",
       phone: "9876543213",
       password: "manager123",
+      status: "Pending",
+    },
+    {
+      firstName: "Sanjay",
+      lastName: "Mehta",
+      email: "sanjay.manager@workly.com",
+      phone: "9876543214",
+      password: "manager123",
+      status: "Pending",
+    },
+    {
+      firstName: "Kavita",
+      lastName: "Rao",
+      email: "kavita.manager@workly.com",
+      phone: "9876543215",
+      password: "manager123",
+      status: "Pending",
     },
   ],
   employees: [
@@ -46,6 +65,7 @@ const seedData = {
       email: "vikram@workly.com",
       phone: "9876543221",
       password: "employee123",
+      status: "Active",
     },
     {
       firstName: "Sneha",
@@ -53,6 +73,7 @@ const seedData = {
       email: "sneha@workly.com",
       phone: "9876543222",
       password: "employee123",
+      status: "Active",
     },
     {
       firstName: "Arun",
@@ -60,6 +81,7 @@ const seedData = {
       email: "arun@workly.com",
       phone: "9876543223",
       password: "employee123",
+      status: "Pending",
     },
     {
       firstName: "Neha",
@@ -67,6 +89,7 @@ const seedData = {
       email: "neha@workly.com",
       phone: "9876543224",
       password: "employee123",
+      status: "Pending",
     },
     {
       firstName: "Karan",
@@ -74,6 +97,7 @@ const seedData = {
       email: "karan@workly.com",
       phone: "9876543225",
       password: "employee123",
+      status: "Pending",
     },
     {
       firstName: "Pooja",
@@ -81,6 +105,7 @@ const seedData = {
       email: "pooja@workly.com",
       phone: "9876543226",
       password: "employee123",
+      status: "Active",
     },
   ],
 };
@@ -122,39 +147,47 @@ const seedDatabase = async () => {
       const hashedData = {
         ...managerData,
         password: await hashPassword(managerData.password),
-        status: "Active",
+        status: managerData.status || "Pending",
       };
       const manager = await Manager.create(hashedData);
       createdManagers.push(manager);
       console.log(
-        `✅ Manager created: ${manager.firstName} ${manager.lastName} (${manager.email})`,
+        `✅ Manager created: ${manager.firstName} ${manager.lastName} (${manager.email}) - Status: ${manager.status}`,
       );
     }
 
     // Create Employees and assign to managers
     console.log("\n👤 Creating Employees...");
+    // Filter only active managers for assignment
+    const activeManagers = createdManagers.filter((m) => m.status === "Active");
+
     for (let i = 0; i < seedData.employees.length; i++) {
       const employeeData = seedData.employees[i];
-      // Assign each employee to a manager (round-robin)
-      const assignedManager = createdManagers[i % createdManagers.length];
+      // Assign each employee to an active manager (round-robin)
+      const assignedManager =
+        activeManagers.length > 0
+          ? activeManagers[i % activeManagers.length]
+          : null;
 
       const hashedData = {
         ...employeeData,
         password: await hashPassword(employeeData.password),
-        status: "Active",
-        manager: assignedManager._id,
+        status: employeeData.status || "Pending",
+        manager: assignedManager?._id || null,
       };
 
       const employee = await User.create(hashedData);
 
-      // Update manager's team
-      await Manager.findByIdAndUpdate(assignedManager._id, {
-        $push: { teamMembers: employee._id },
-        $inc: { teamSize: 1 },
-      });
+      // Update manager's team if manager assigned
+      if (assignedManager) {
+        await Manager.findByIdAndUpdate(assignedManager._id, {
+          $push: { teamMembers: employee._id },
+          $inc: { teamSize: 1 },
+        });
+      }
 
       console.log(
-        `✅ Employee created: ${employee.firstName} ${employee.lastName} (${employee.email}) → Manager: ${assignedManager.firstName}`,
+        `✅ Employee created: ${employee.firstName} ${employee.lastName} (${employee.email}) - Status: ${employee.status}`,
       );
     }
 

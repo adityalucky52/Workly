@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Card,
@@ -21,98 +22,127 @@ import {
   TabsList,
   TabsTrigger,
 } from "../../../components/ui/tabs";
-import { Eye, CheckCircle2, Clock, ListTodo } from "lucide-react";
-
-const tasks = [
-  {
-    id: 1,
-    title: "Complete API documentation",
-    priority: "High",
-    dueDate: "2024-01-30",
-    status: "In Progress",
-    manager: "Jane Smith",
-  },
-  {
-    id: 2,
-    title: "Write unit tests",
-    priority: "Medium",
-    dueDate: "2024-01-28",
-    status: "Pending",
-    manager: "Jane Smith",
-  },
-  {
-    id: 3,
-    title: "Fix login bug",
-    priority: "High",
-    dueDate: "2024-01-25",
-    status: "In Progress",
-    manager: "Jane Smith",
-  },
-  {
-    id: 4,
-    title: "Update user profile page",
-    priority: "Low",
-    dueDate: "2024-02-01",
-    status: "Pending",
-    manager: "Jane Smith",
-  },
-  {
-    id: 5,
-    title: "Database optimization",
-    priority: "Medium",
-    dueDate: "2024-01-20",
-    status: "Completed",
-    manager: "Jane Smith",
-  },
-];
+import {
+  Eye,
+  CheckCircle2,
+  Clock,
+  ListTodo,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { employeeAPI } from "../../../services/api";
 
 const MyTasks = () => {
+  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        const response = await employeeAPI.getMyTasks({ limit: 1000 });
+        if (response.data.success) {
+          const processedTasks = response.data.data.map((t) => {
+            // Overdue detection
+            let status = t.status;
+            if (
+              status !== "Completed" &&
+              status !== "Cancelled" &&
+              t.dueDate &&
+              new Date(t.dueDate) < new Date()
+            ) {
+              status = "Overdue";
+            }
+            return { ...t, status };
+          });
+          setTasks(processedTasks);
+        }
+      } catch (error) {
+        console.error("Failed to fetch my tasks:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTasks();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading tasks...</span>
+      </div>
+    );
+  }
+
   const inProgressTasks = tasks.filter((t) => t.status === "In Progress");
   const pendingTasks = tasks.filter((t) => t.status === "Pending");
   const completedTasks = tasks.filter((t) => t.status === "Completed");
 
-  const TaskTable = ({ taskList }) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Task</TableHead>
-          <TableHead>Priority</TableHead>
-          <TableHead>Due Date</TableHead>
-          <TableHead>Assigned By</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {taskList.map((task) => (
-          <TableRow key={task.id}>
-            <TableCell className="font-medium">{task.title}</TableCell>
-            <TableCell>
-              <Badge
-                variant={
-                  task.priority === "High"
-                    ? "destructive"
-                    : task.priority === "Medium"
-                      ? "default"
-                      : "secondary"
-                }
-              >
-                {task.priority}
-              </Badge>
-            </TableCell>
-            <TableCell>{task.dueDate}</TableCell>
-            <TableCell>{task.manager}</TableCell>
-            <TableCell className="text-right">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to={`/employee/tasks/${task.id}`}>
-                  <Eye className="h-4 w-4" />
-                </Link>
-              </Button>
-            </TableCell>
+  const getStatusBadge = (status) => {
+    let variant = "secondary";
+    if (status === "Completed") variant = "default"; // or green custom
+    if (status === "In Progress") variant = "default";
+    if (status === "Overdue") variant = "destructive";
+
+    return <Badge variant={variant}>{status}</Badge>;
+  };
+
+  const TaskTable = ({ taskList }) =>
+    taskList.length === 0 ? (
+      <div className="text-center py-8 text-muted-foreground">
+        No tasks in this category.
+      </div>
+    ) : (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Task</TableHead>
+            <TableHead>Priority</TableHead>
+            <TableHead>Due Date</TableHead>
+            <TableHead>Assigned By</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+        </TableHeader>
+        <TableBody>
+          {taskList.map((task) => (
+            <TableRow key={task._id}>
+              <TableCell className="font-medium">{task.title}</TableCell>
+              <TableCell>
+                <Badge
+                  variant={
+                    task.priority === "High"
+                      ? "destructive"
+                      : task.priority === "Medium"
+                        ? "default"
+                        : "secondary"
+                  }
+                >
+                  {task.priority || "Medium"}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                {task.dueDate
+                  ? new Date(task.dueDate).toLocaleDateString()
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                {task.createdBy
+                  ? `${task.createdBy.firstName} ${task.createdBy.lastName}`
+                  : "System"}
+              </TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to={`/employee/tasks/${task._id}`}>
+                    <Eye className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
 
   return (
     <div className="space-y-6">
@@ -124,9 +154,11 @@ const MyTasks = () => {
             View and manage your assigned tasks
           </p>
         </div>
+        {/* 
         <Button asChild>
           <Link to="/employee/tasks/update">Update Status</Link>
         </Button>
+         */}
       </div>
 
       {/* Stats */}

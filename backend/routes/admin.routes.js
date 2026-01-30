@@ -10,8 +10,12 @@ import {
   getAllManagers,
   getManagerById,
   updateManager,
+  approveManager,
+  rejectManager,
   getAllEmployees,
   getEmployeeById,
+  approveEmployee,
+  rejectEmployee,
   transferEmployee,
   getAllTasks,
   getTaskById,
@@ -21,6 +25,12 @@ import {
 import { authMiddleware, requireRole } from "../middleware/authMiddleware.js";
 
 const router = Router();
+
+// Log all admin requests for debugging
+router.use((req, res, next) => {
+  console.log(`[ADMIN ROUTE] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // All admin routes require authentication and admin role
 router.use(authMiddleware);
@@ -41,10 +51,14 @@ router.put("/users/:id/assign-manager", assignManagerToEmployee);
 router.get("/managers", getAllManagers);
 router.get("/managers/:id", getManagerById);
 router.put("/managers/:id", updateManager);
+router.put("/managers/:id/approve", approveManager);
+router.put("/managers/:id/reject", rejectManager);
 
 // Employee management
 router.get("/employees", getAllEmployees);
 router.get("/employees/:id", getEmployeeById);
+router.put("/employees/:id/approve", approveEmployee);
+router.put("/employees/:id/reject", rejectEmployee);
 router.put("/employees/:id/transfer", transferEmployee);
 
 // Task management

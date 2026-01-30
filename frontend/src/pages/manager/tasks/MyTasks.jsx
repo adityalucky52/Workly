@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Card,
@@ -22,44 +22,83 @@ import {
   TabsList,
   TabsTrigger,
 } from "../../../components/ui/tabs";
-import { PlusCircle, CheckCircle2, Clock, ListTodo } from "lucide-react";
-
-const tasks = [
-  {
-    id: 1,
-    title: "Review team performance",
-    status: "In Progress",
-    priority: "High",
-    dueDate: "2024-01-30",
-  },
-  {
-    id: 2,
-    title: "Prepare quarterly report",
-    status: "Pending",
-    priority: "Medium",
-    dueDate: "2024-01-28",
-  },
-  {
-    id: 3,
-    title: "Interview new candidates",
-    status: "Completed",
-    priority: "High",
-    dueDate: "2024-01-20",
-  },
-  {
-    id: 4,
-    title: "Update project roadmap",
-    status: "In Progress",
-    priority: "Medium",
-    dueDate: "2024-02-01",
-  },
-];
+import {
+  PlusCircle,
+  CheckCircle2,
+  Clock,
+  ListTodo,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+import { managerAPI } from "../../../services/api";
 
 const MyTasks = () => {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        const response = await managerAPI.getMyTasks({ limit: 1000 });
+        if (response.data.success) {
+          const fetchedTasks = response.data.data.map((task) => {
+            // Overdue check
+            let status = task.status;
+            if (
+              status !== "Completed" &&
+              status !== "Cancelled" &&
+              task.dueDate &&
+              new Date(task.dueDate) < new Date()
+            ) {
+              status = "Overdue";
+            }
+            return { ...task, status };
+          });
+          setTasks(fetchedTasks);
+        }
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
   const inProgressCount = tasks.filter(
     (t) => t.status === "In Progress",
   ).length;
   const completedCount = tasks.filter((t) => t.status === "Completed").length;
+
+  const getStatusBadge = (status) => {
+    const config = {
+      Completed: { variant: "outline", icon: CheckCircle2 },
+      "In Progress": { variant: "default", icon: Clock },
+      Pending: { variant: "secondary", icon: ListTodo },
+      Overdue: { variant: "destructive", icon: AlertCircle },
+    };
+    const { variant, icon: Icon } = config[status] || {
+      variant: "secondary",
+      icon: null,
+    };
+    return (
+      <Badge variant={variant} className="flex w-fit items-center gap-1">
+        {Icon && <Icon className="h-3 w-3" />}
+        {status}
+      </Badge>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading tasks...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -67,7 +106,7 @@ const MyTasks = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Tasks</h1>
-          <p className="text-muted-foreground">Manage your personal tasks</p>
+          <p className="text-muted-foreground">Tasks assigned to you</p>
         </div>
         <Button asChild>
           <Link to="/manager/tasks/create">
@@ -115,72 +154,35 @@ const MyTasks = () => {
       {/* Tasks Table */}
       <Card>
         <CardContent className="pt-6">
-          <Tabs defaultValue="all">
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="progress">In Progress</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
-            </TabsList>
+          {tasks.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <ListTodo className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-semibold mb-1">
+                No tasks assigned to you
+              </h3>
+              <p>When tasks are assigned to you, they will appear here.</p>
+            </div>
+          ) : (
+            <Tabs defaultValue="all">
+              <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="progress">In Progress</TabsTrigger>
+                <TabsTrigger value="completed">Completed</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="all" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tasks.map((task) => (
-                    <TableRow key={task.id}>
-                      <TableCell className="font-medium">
-                        {task.title}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            task.priority === "High" ? "destructive" : "default"
-                          }
-                        >
-                          {task.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{task.dueDate}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            task.status === "Completed"
-                              ? "outline"
-                              : task.status === "In Progress"
-                                ? "default"
-                                : "secondary"
-                          }
-                        >
-                          {task.status}
-                        </Badge>
-                      </TableCell>
+              <TabsContent value="all" className="mt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Task</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-
-            <TabsContent value="progress" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Due Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tasks
-                    .filter((t) => t.status === "In Progress")
-                    .map((task) => (
-                      <TableRow key={task.id}>
+                  </TableHeader>
+                  <TableBody>
+                    {tasks.map((task) => (
+                      <TableRow key={task._id}>
                         <TableCell className="font-medium">
                           {task.title}
                         </TableCell>
@@ -192,51 +194,122 @@ const MyTasks = () => {
                                 : "default"
                             }
                           >
-                            {task.priority}
+                            {task.priority || "Medium"}
                           </Badge>
-                        </TableCell>
-                        <TableCell>{task.dueDate}</TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-
-            <TabsContent value="completed" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Due Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tasks
-                    .filter((t) => t.status === "Completed")
-                    .map((task) => (
-                      <TableRow key={task.id}>
-                        <TableCell className="font-medium">
-                          {task.title}
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant={
-                              task.priority === "High"
-                                ? "destructive"
-                                : "default"
-                            }
-                          >
-                            {task.priority}
-                          </Badge>
+                          {task.dueDate
+                            ? new Date(task.dueDate).toLocaleDateString()
+                            : "-"}
                         </TableCell>
-                        <TableCell>{task.dueDate}</TableCell>
+                        <TableCell>{getStatusBadge(task.status)}</TableCell>
                       </TableRow>
                     ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-          </Tabs>
+                  </TableBody>
+                </Table>
+              </TabsContent>
+
+              <TabsContent value="progress" className="mt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Task</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Due Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tasks
+                      .filter((t) => t.status === "In Progress")
+                      .map((task) => (
+                        <TableRow key={task._id}>
+                          <TableCell className="font-medium">
+                            {task.title}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                task.priority === "High"
+                                  ? "destructive"
+                                  : "default"
+                              }
+                            >
+                              {task.priority || "Medium"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {task.dueDate
+                              ? new Date(task.dueDate).toLocaleDateString()
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {tasks.filter((t) => t.status === "In Progress").length ===
+                      0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          className="text-center text-muted-foreground"
+                        >
+                          No tasks in progress.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+
+              <TabsContent value="completed" className="mt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Task</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Due Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tasks
+                      .filter((t) => t.status === "Completed")
+                      .map((task) => (
+                        <TableRow key={task._id}>
+                          <TableCell className="font-medium">
+                            {task.title}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                task.priority === "High"
+                                  ? "destructive"
+                                  : "default"
+                              }
+                            >
+                              {task.priority || "Medium"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {task.dueDate
+                              ? new Date(task.dueDate).toLocaleDateString()
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {tasks.filter((t) => t.status === "Completed").length ===
+                      0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          className="text-center text-muted-foreground"
+                        >
+                          No completed tasks.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>

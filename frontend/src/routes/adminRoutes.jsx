@@ -12,6 +12,7 @@ import ManagerDetails from "../pages/admin/managers/ManagerDetails";
 import AdminEmployeeList from "../pages/admin/employees/EmployeeList";
 import AdminEmployeeDetails from "../pages/admin/employees/EmployeeDetails";
 import TransferEmployee from "../pages/admin/employees/TransferEmployee";
+import GroupsList from "../pages/admin/groups/GroupsList";
 import AllTasks from "../pages/admin/tasks/AllTasks";
 import AdminTaskDetails from "../pages/admin/tasks/TaskDetails";
 import SystemOverview from "../pages/admin/reports/SystemOverview";
@@ -77,6 +78,12 @@ export const adminRoutes = {
     {
       path: "employees/:id/transfer",
       element: <TransferEmployee />,
+    },
+
+    // ==================== Groups ====================
+    {
+      path: "groups",
+      element: <GroupsList />,
     },
 
     // ==================== Tasks ====================

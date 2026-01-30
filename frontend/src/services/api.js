@@ -26,9 +26,12 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response) {
-      const { status } = error.response;
+      const { status, config } = error.response;
 
-      if (status === 401) {
+      // Don't redirect to login if the failing request is already the auth check
+      const isAuthCheck = config.url?.includes("/auth/me");
+
+      if (status === 401 && !isAuthCheck) {
         // Clear auth state and redirect to login
         localStorage.removeItem("auth-storage");
         window.location.href = "/login";
@@ -80,10 +83,14 @@ export const adminAPI = {
   getAllManagers: (params) => api.get("/admin/managers", { params }),
   getManagerById: (id) => api.get(`/admin/managers/${id}`),
   updateManager: (id, data) => api.put(`/admin/managers/${id}`, data),
+  approveManager: (id) => api.put(`/admin/managers/${id}/approve`),
+  rejectManager: (id) => api.put(`/admin/managers/${id}/reject`),
 
   // Employees
   getAllEmployees: (params) => api.get("/admin/employees", { params }),
   getEmployeeById: (id) => api.get(`/admin/employees/${id}`),
+  approveEmployee: (id) => api.put(`/admin/employees/${id}/approve`),
+  rejectEmployee: (id) => api.put(`/admin/employees/${id}/reject`),
   transferEmployee: (id, newManagerId) =>
     api.put(`/admin/employees/${id}/transfer`, { newManagerId }),
 
@@ -144,6 +151,16 @@ export const profileAPI = {
   changePassword: (data) => api.put("/profile/password", data),
   getSettings: () => api.get("/profile/settings"),
   updateSettings: (data) => api.put("/profile/settings", data),
+};
+
+// ==================== GROUP API ====================
+export const groupAPI = {
+  createGroup: (data) => api.post("/groups", data),
+  getAllGroups: (params) => api.get("/groups", { params }),
+  getGroupById: (id) => api.get(`/groups/${id}`),
+  updateGroup: (id, data) => api.put(`/groups/${id}`, data),
+  deleteGroup: (id) => api.delete(`/groups/${id}`),
+  getAvailableMembers: () => api.get("/groups/available-members"),
 };
 
 export default api;

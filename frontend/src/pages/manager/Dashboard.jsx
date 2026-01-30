@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Card,
@@ -30,106 +31,133 @@ import {
   AlertCircle,
   ArrowUpRight,
   PlusCircle,
+  Loader2,
+  ListChecks,
 } from "lucide-react";
-
-const stats = [
-  {
-    title: "Team Members",
-    value: "12",
-    change: "+2",
-    icon: Users,
-    description: "this month",
-  },
-  {
-    title: "Active Tasks",
-    value: "34",
-    change: "+8",
-    icon: ListTodo,
-    description: "assigned",
-  },
-  {
-    title: "Completed",
-    value: "89",
-    change: "+15",
-    icon: CheckCircle2,
-    description: "this week",
-  },
-  {
-    title: "Overdue",
-    value: "3",
-    change: "-2",
-    icon: AlertCircle,
-    description: "pending",
-  },
-];
-
-const teamMembers = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    role: "Developer",
-    activeTasks: 5,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Emily Davis",
-    email: "emily@example.com",
-    role: "Designer",
-    activeTasks: 3,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Alex Wilson",
-    email: "alex@example.com",
-    role: "Developer",
-    activeTasks: 7,
-    status: "Busy",
-  },
-  {
-    id: 4,
-    name: "Sam Taylor",
-    email: "sam@example.com",
-    role: "QA Engineer",
-    activeTasks: 2,
-    status: "Active",
-  },
-];
-
-const recentTasks = [
-  {
-    id: 1,
-    title: "Complete API documentation",
-    assignee: "John Doe",
-    status: "In Progress",
-    priority: "High",
-  },
-  {
-    id: 2,
-    title: "Design landing page",
-    assignee: "Emily Davis",
-    status: "Pending",
-    priority: "Medium",
-  },
-  {
-    id: 3,
-    title: "Fix login bug",
-    assignee: "Alex Wilson",
-    status: "Completed",
-    priority: "High",
-  },
-  {
-    id: 4,
-    title: "Write unit tests",
-    assignee: "Sam Taylor",
-    status: "In Progress",
-    priority: "Low",
-  },
-];
+import { managerAPI, adminAPI } from "../../services/api";
 
 const Dashboard = () => {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    teamSize: 0,
+    activeTasks: 0,
+    completedTasks: 0,
+    overdueTasks: 0,
+  });
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [recentTasks, setRecentTasks] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // Get current user first to personalize welcome message
+        const userRes = await adminAPI.getCurrentUser();
+        if (userRes.data.success) {
+          setCurrentUser(userRes.data.data);
+        }
+
+        const statsRes = await managerAPI.getDashboardStats();
+        if (statsRes.data.success) {
+          const data = statsRes.data.data;
+
+          setStats({
+            teamSize: data.team.size,
+            activeTasks: data.tasks.total - data.tasks.completed, // Or use specific status
+            completedTasks: data.tasks.completed,
+            overdueTasks: data.tasks.overdue,
+          });
+
+          setTeamMembers(data.team.members || []);
+          setRecentTasks(data.recentTasks || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading dashboard...</span>
+      </div>
+    );
+  }
+
+  const statCards = [
+    {
+      title: "Team Members",
+      value: stats.teamSize,
+      icon: Users,
+      description: "employees reporting to you",
+      color: "text-blue-600",
+    },
+    {
+      title: "Active Tasks",
+      value: stats.activeTasks,
+      icon: ListTodo,
+      description: "tasks in progress or pending",
+      color: "text-orange-600",
+    },
+    {
+      title: "Completed",
+      value: stats.completedTasks,
+      icon: CheckCircle2,
+      description: "total completed tasks",
+      color: "text-green-600",
+    },
+    {
+      title: "Overdue",
+      value: stats.overdueTasks,
+      icon: AlertCircle,
+      description: "tasks past due date",
+      color: "text-red-600",
+    },
+  ];
+
+  const getStatusBadge = (status) => {
+    const variants = {
+      Active: "default",
+      Pending: "secondary",
+      Inactive: "destructive",
+    };
+    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
+  };
+
+  const getTaskStatusBadge = (status) => {
+    const variants = {
+      Completed: "default", // Usually finished/green
+      "In Progress": "default", // usually blue/primary
+      Pending: "secondary",
+      Overdue: "destructive",
+    };
+    // Map backend status to UI variants if needed
+    let variant = "secondary";
+    if (status === "Completed") variant = "default"; // or implement success/green variant
+    if (status === "In Progress") variant = "default";
+    if (status === "Overdue") variant = "destructive";
+
+    // Using Lucide icons for visual flavor
+    let icon = null;
+    if (status === "Completed")
+      icon = <CheckCircle2 className="mr-1 h-3 w-3" />;
+    if (status === "In Progress") icon = <Clock className="mr-1 h-3 w-3" />;
+
+    return (
+      <Badge variant={variant} className="flex w-fit items-center">
+        {icon}
+        {status}
+      </Badge>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -137,7 +165,8 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, Jane! Here's your team overview.
+            Welcome back, {currentUser?.firstName || "Manager"}! Here's your
+            team overview.
           </p>
         </div>
         <Button asChild>
@@ -150,20 +179,19 @@ const Dashboard = () => {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center text-xs text-muted-foreground">
+              <div className="flex items-center text-xs text-muted-foreground mt-1">
                 <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
-                <span className="text-green-500">{stat.change}</span>
-                <span className="ml-1">{stat.description}</span>
+                <span>{stat.description}</span>
               </div>
             </CardContent>
           </Card>
@@ -178,7 +206,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Team Members</CardTitle>
-                <CardDescription>Your team's current status</CardDescription>
+                <CardDescription>Your team's overview</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/manager/team" className="flex items-center gap-1">
@@ -189,49 +217,51 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Tasks</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {teamMembers.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>
-                            {member.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{member.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {member.role}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{member.activeTasks}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          member.status === "Active" ? "default" : "secondary"
-                        }
-                      >
-                        {member.status}
-                      </Badge>
-                    </TableCell>
+            {teamMembers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No team members assigned</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Member</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {teamMembers.map((member) => (
+                    <TableRow key={member._id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback>
+                              {member.firstName?.[0]}
+                              {member.lastName?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">
+                              {member.firstName} {member.lastName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {member.role || "Employee"}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {member.email}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(member.status)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -241,7 +271,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Recent Tasks</CardTitle>
-                <CardDescription>Latest task updates</CardDescription>
+                <CardDescription>Latest created tasks</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <Link
@@ -255,55 +285,53 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Task</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentTasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{task.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {task.assignee}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          task.priority === "High"
-                            ? "destructive"
-                            : task.priority === "Medium"
-                              ? "default"
-                              : "secondary"
-                        }
-                      >
-                        {task.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          task.status === "Completed"
-                            ? "outline"
-                            : task.status === "In Progress"
-                              ? "default"
-                              : "secondary"
-                        }
-                      >
-                        {task.status}
-                      </Badge>
-                    </TableCell>
+            {recentTasks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <ListChecks className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No tasks created yet</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recentTasks.map((task) => (
+                    <TableRow key={task._id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{task.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            For:{" "}
+                            {task.assignee
+                              ? `${task.assignee.firstName} ${task.assignee.lastName}`
+                              : "Unassigned"}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            task.priority === "High"
+                              ? "destructive"
+                              : task.priority === "Medium"
+                                ? "default"
+                                : "secondary"
+                          }
+                        >
+                          {task.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{getTaskStatusBadge(task.status)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

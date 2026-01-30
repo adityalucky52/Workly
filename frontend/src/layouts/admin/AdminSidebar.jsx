@@ -22,6 +22,7 @@ import {
   Users,
   UserCog,
   UserCheck,
+  UsersRound,
   ListTodo,
   BarChart3,
   FileText,
@@ -61,6 +62,11 @@ const managementItems = [
     title: "Employees",
     icon: UserCheck,
     path: "/admin/employees",
+  },
+  {
+    title: "Groups",
+    icon: UsersRound,
+    path: "/admin/groups",
   },
 ];
 
