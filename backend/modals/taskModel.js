@@ -31,7 +31,9 @@ const taskSchema = new mongoose.Schema(
     // Assignment
     assignee: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: function () {
+        return this.assigneeType === "manager" ? "Manager" : "User";
+      },
       default: null,
     },
     assigneeType: {
@@ -40,11 +42,18 @@ const taskSchema = new mongoose.Schema(
       default: "employee",
     },
 
-    // Creator (Manager who created the task)
+    // Creator
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Manager",
+      ref: function () {
+        return this.createdByType === "Admin" ? "Admin" : "Manager";
+      },
       required: true,
+    },
+    createdByType: {
+      type: String,
+      enum: ["Manager", "Admin"],
+      default: "Manager",
     },
 
     // Dates

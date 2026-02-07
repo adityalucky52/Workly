@@ -95,6 +95,7 @@ export const adminAPI = {
     api.put(`/admin/employees/${id}/transfer`, { newManagerId }),
 
   // Tasks
+  createTask: (data) => api.post("/admin/tasks", data),
   getAllTasks: (params) => api.get("/admin/tasks", { params }),
   getTaskById: (id) => api.get(`/admin/tasks/${id}`),
 

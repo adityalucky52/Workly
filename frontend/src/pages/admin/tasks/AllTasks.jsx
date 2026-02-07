@@ -211,6 +211,9 @@ const AllTasks = () => {
               <Button variant="outline" size="icon">
                 <Filter className="h-4 w-4" />
               </Button>
+              <Button asChild>
+                <Link to="/admin/tasks/create">Create Task</Link>
+              </Button>
             </div>
           </div>
         </CardHeader>

@@ -17,6 +17,7 @@ import {
   approveEmployee,
   rejectEmployee,
   transferEmployee,
+  createTask,
   getAllTasks,
   getTaskById,
   getSystemOverview,
@@ -62,6 +63,7 @@ router.put("/employees/:id/reject", rejectEmployee);
 router.put("/employees/:id/transfer", transferEmployee);
 
 // Task management
+router.post("/tasks", createTask);
 router.get("/tasks", getAllTasks);
 router.get("/tasks/:id", getTaskById);
 

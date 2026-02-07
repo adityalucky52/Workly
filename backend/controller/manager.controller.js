@@ -295,7 +295,7 @@ export const getMyTasks = async (req, res, next) => {
     const managerId = req.user.id;
     const { page = 1, limit = 10, status, priority, search } = req.query;
 
-    const query = { createdBy: managerId };
+    const query = { assignee: managerId };
     if (status) query.status = status;
     if (priority) query.priority = priority;
     if (search) {

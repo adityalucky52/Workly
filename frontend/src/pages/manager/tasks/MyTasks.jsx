@@ -178,6 +178,7 @@ const MyTasks = () => {
                       <TableHead>Priority</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -203,6 +204,19 @@ const MyTasks = () => {
                             : "-"}
                         </TableCell>
                         <TableCell>{getStatusBadge(task.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="outline" asChild>
+                            <Link
+                              to="/manager/tasks/create"
+                              state={{
+                                title: `Subtask: ${task.title}`,
+                                description: `Original Task Description: ${task.description || "N/A"}`,
+                              }}
+                            >
+                              Delegate
+                            </Link>
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

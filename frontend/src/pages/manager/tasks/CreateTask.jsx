@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -24,6 +24,7 @@ import { managerAPI } from "../../../services/api";
 
 const CreateTask = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState([]);
   const [fetchingTeam, setFetchingTeam] = useState(true);
@@ -35,6 +36,16 @@ const CreateTask = () => {
     priority: "",
     dueDate: "",
   });
+
+  useEffect(() => {
+    if (location.state) {
+      setFormData((prev) => ({
+        ...prev,
+        title: location.state.title || "",
+        description: location.state.description || "",
+      }));
+    }
+  }, [location.state]);
 
   useEffect(() => {
     // Fetch team members for assignment

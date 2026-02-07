@@ -606,6 +606,44 @@ export const transferEmployee = async (req, res, next) => {
 
 // ==================== TASK MANAGEMENT ====================
 
+export const createTask = async (req, res, next) => {
+  try {
+    const adminId = req.user.id;
+    const { title, description, assignee, priority, dueDate } = req.body;
+
+    // Validate assignee exists (can be User or Manager)
+    const userAssignee = await User.findById(assignee);
+    const managerAssignee = await Manager.findById(assignee);
+
+    if (!userAssignee && !managerAssignee) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Assignee not found" });
+    }
+
+    const newTask = await Task.create({
+      title,
+      description,
+      assignee, // Can be user or manager ID
+      assigneeType: "manager", // Admin assigns to Manager
+      priority,
+      dueDate,
+      createdBy: adminId, // Created by Admin
+      createdByType: "Admin", // Optional flag if schema supports it, otherwise effectively just an ID
+      status: "pending",
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Task created successfully",
+      data: newTask,
+    });
+  } catch (error) {
+    console.error("Create task error:", error);
+    next({ status: 400, message: error.message || "Failed to create task" });
+  }
+};
+
 export const getAllTasks = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, status, priority, search } = req.query;
