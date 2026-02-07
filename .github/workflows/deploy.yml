@@ -1,0 +1,36 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            # Check if directory exists, if not clone it
+            if [ ! -d "Workly" ]; then
+              git clone https://github.com/${{ github.repository }} Workly
+            fi
+
+            cd Workly
+
+            # Pull latest changes
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Create/Update .env file from GitHub Secret
+            echo "${{ secrets.ENV_FILE }}" > .env
+
+            # Build and start services
+            # Using current user permission (assuming user is in docker group)
+            # If not, use sudo
+            docker compose down || true
+            docker compose up -d --build
