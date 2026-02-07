@@ -33,5 +33,5 @@ jobs:
             # Build and start services
             # Using current user permission (assuming user is in docker group)
             # If not, use sudo
-            docker compose down || true
-            docker compose up -d --build
+            sudo docker compose down || true
+            sudo docker compose up -d --build
