@@ -379,35 +379,24 @@ export const updateManager = async (req, res, next) => {
 
 export const approveManager = async (req, res, next) => {
   try {
-    console.log("=== APPROVE MANAGER REQUEST ===");
-    console.log("Manager ID:", req.params.id);
-
     const manager = await Manager.findByIdAndUpdate(
       req.params.id,
       { status: "Active" },
       { new: true },
     ).select("-password");
 
-    console.log("Manager found:", manager ? "Yes" : "No");
-
     if (!manager) {
-      console.log("Manager not found with ID:", req.params.id);
       return res
         .status(404)
         .json({ success: false, message: "Manager not found" });
     }
 
-    console.log("Manager approved successfully:", manager.email);
     res.status(200).json({
       success: true,
       message: "Manager approved successfully",
       data: manager,
     });
   } catch (error) {
-    console.error("=== APPROVE MANAGER ERROR ===");
-    console.error("Error name:", error.name);
-    console.error("Error message:", error.message);
-    console.error("Full error:", error);
     next({ status: 500, message: "Failed to approve manager" });
   }
 };

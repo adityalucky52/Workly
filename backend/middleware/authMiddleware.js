@@ -5,14 +5,8 @@ import { User } from "../modals/userModel.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
-    console.log("=== AUTH MIDDLEWARE ===");
-    console.log("Request path:", req.originalUrl);
-    console.log("Cookies received:", req.cookies);
-    console.log("Token present:", !!req.cookies.token);
-
     const token = req.cookies.token;
     if (!token) {
-      console.log("AUTH FAILED: No token provided");
       return res.status(401).json({
         success: false,
         message: "Unauthorized - No token provided",
@@ -20,15 +14,10 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Token decoded successfully:", {
-      id: decoded.id,
-      role: decoded.role,
-    });
     req.user = decoded; // {id: "...", role: "admin|manager|employee"}
 
     next();
   } catch (error) {
-    console.log("AUTH FAILED: Token verification error:", error.message);
     return res.status(401).json({
       success: false,
       message: "Unauthorized - Invalid token",

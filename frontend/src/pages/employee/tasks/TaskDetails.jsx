@@ -57,7 +57,7 @@ const TaskDetails = () => {
               setComments(taskRes.data.data.comments);
             }
           } catch (cErr) {
-            console.log("Comments fetch optional/failed", cErr);
+            // Comments fetch optional/failed
           }
         } else {
           setError("Task not found");
@@ -111,14 +111,17 @@ const TaskDetails = () => {
         </div>
         <Badge
           variant={
-            task.status === "In Progress"
+            task.status === "in-progress"
               ? "default"
-              : task.status === "Completed"
+              : task.status === "completed"
                 ? "outline"
                 : "secondary"
           }
         >
-          {task.status}
+          {task.status
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")}
         </Badge>
       </div>
 

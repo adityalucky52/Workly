@@ -31,22 +31,15 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   // Verify auth with backend after hydration
   useEffect(() => {
     const verifyAuth = async () => {
-      console.log("=== FRONTEND AUTH CHECK ===");
-      console.log("hasHydrated:", hasHydrated);
-
       if (!hasHydrated) {
-        console.log("Waiting for hydration...");
         return;
       }
 
       try {
-        console.log("Calling getCurrentUser API...");
         // Always verify with backend that token is still valid
         const response = await authAPI.getCurrentUser();
-        console.log("API Response:", response.data);
 
         if (response.data.success) {
-          console.log("Auth SUCCESS - User authenticated");
           // Update store with latest user data from server
           useAuthStore.setState({
             user: response.data.user,
@@ -54,7 +47,6 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
           });
           setIsValid(true);
         } else {
-          console.log("Auth FAILED - Response not successful");
           // Token is invalid
           localStorage.removeItem("auth-storage");
           useAuthStore.setState({
@@ -65,8 +57,6 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
         }
       } catch (error) {
         // Token is invalid or expired
-        console.error("Auth verification FAILED with error:", error);
-        console.error("Error response:", error.response?.data);
         localStorage.removeItem("auth-storage");
         useAuthStore.setState({
           user: null,

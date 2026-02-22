@@ -29,7 +29,6 @@ const router = Router();
 
 // Log all admin requests for debugging
 router.use((req, res, next) => {
-  console.log(`[ADMIN ROUTE] ${req.method} ${req.originalUrl}`);
   next();
 });
 

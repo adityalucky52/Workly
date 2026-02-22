@@ -44,7 +44,6 @@ const AssignManager = () => {
   const [selectedManager, setSelectedManager] = useState("");
 
   const handleAssign = () => {
-    console.log("Assigning manager:", selectedManager, "to user:", id);
     navigate(`/admin/users/${id}`);
   };
 

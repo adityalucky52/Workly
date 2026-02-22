@@ -3,6 +3,7 @@
 
 services:
   backend:
+    image: ${DOCKER_USERNAME}/workly-backend:latest
     build: 
       context: ./backend
     container_name: workly-backend
@@ -13,16 +14,18 @@ services:
       - .env
     environment:
       - PORT=3000
+      - NODE_ENV=production
     restart: always
     networks:
       - workly-network
 
   frontend:
+    image: ${DOCKER_USERNAME}/workly-frontend:latest
     build: 
       context: ./frontend
     container_name: workly-frontend
     ports:
-      - "80:5173"
+      - "80:80"
     env_file:
       - .env 
     depends_on:

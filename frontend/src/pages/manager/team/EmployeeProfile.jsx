@@ -68,9 +68,6 @@ const EmployeeProfile = () => {
           if (empRes.data.success) employeeData = empRes.data.data;
         } catch (e) {
           // Fallback if specific route fails or not implemented on backend
-          console.log(
-            "Manager specific route failed, trying admin route fallback if permitted or just reporting failure",
-          );
           // In real app, might fail due to permissions. Let's assume the manager route works as it was in the API list.
           throw e;
         }

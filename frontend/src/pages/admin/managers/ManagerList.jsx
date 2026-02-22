@@ -72,7 +72,8 @@ const ManagerList = () => {
       }
     } catch (err) {
       console.error("Failed to fetch managers:", err);
-      setError("Failed to load managers. Please try again.");
+      const details = err.response?.data?.message || err.message;
+      setError(`Failed to load managers. Details: ${details}`);
     } finally {
       setLoading(false);
     }

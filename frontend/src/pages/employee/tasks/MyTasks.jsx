@@ -46,12 +46,12 @@ const MyTasks = () => {
             // Overdue detection
             let status = t.status;
             if (
-              status !== "Completed" &&
-              status !== "Cancelled" &&
+              status !== "completed" &&
+              status !== "cancelled" &&
               t.dueDate &&
               new Date(t.dueDate) < new Date()
             ) {
-              status = "Overdue";
+              status = "overdue";
             }
             return { ...t, status };
           });
@@ -75,17 +75,23 @@ const MyTasks = () => {
     );
   }
 
-  const inProgressTasks = tasks.filter((t) => t.status === "In Progress");
-  const pendingTasks = tasks.filter((t) => t.status === "Pending");
-  const completedTasks = tasks.filter((t) => t.status === "Completed");
+  const inProgressTasks = tasks.filter((t) => t.status === "in-progress");
+  const pendingTasks = tasks.filter((t) => t.status === "pending");
+  const completedTasks = tasks.filter((t) => t.status === "completed");
 
   const getStatusBadge = (status) => {
     let variant = "secondary";
-    if (status === "Completed") variant = "default"; // or green custom
-    if (status === "In Progress") variant = "default";
-    if (status === "Overdue") variant = "destructive";
+    if (status === "completed") variant = "default"; // or green custom
+    if (status === "in-progress") variant = "default";
+    if (status === "overdue") variant = "destructive";
 
-    return <Badge variant={variant}>{status}</Badge>;
+    // Format for display (e.g. "in-progress" -> "In Progress")
+    const displayStatus = status
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+    return <Badge variant={variant}>{displayStatus}</Badge>;
   };
 
   const TaskTable = ({ taskList }) =>

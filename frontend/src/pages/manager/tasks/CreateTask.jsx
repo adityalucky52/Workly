@@ -73,11 +73,15 @@ const CreateTask = () => {
 
     try {
       setLoading(true);
-      // Backend expects: title, description, assignee (userId), priority, dueDate
+      // Backend expects: title, description, assigneeId, priority, dueDate
       const payload = {
-        ...formData,
-        // If assignee is empty string, send null or omit? API likely needs assignee.
-        assignee: formData.assignee || undefined,
+        title: formData.title,
+        description: formData.description,
+        assigneeId: formData.assignee || undefined,
+        priority: formData.priority
+          ? formData.priority.toLowerCase()
+          : "medium",
+        dueDate: formData.dueDate || undefined,
       };
 
       const response = await managerAPI.createTask(payload);
@@ -88,8 +92,8 @@ const CreateTask = () => {
       }
     } catch (error) {
       console.error("Failed to create task:", error);
-      // Ideally show toast error here
-      alert("Failed to create task. Please try again.");
+      const details = error.response?.data?.message || error.message;
+      alert(`Failed to create task. Details: ${details}`);
     } finally {
       setLoading(false);
     }

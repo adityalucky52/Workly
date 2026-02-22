@@ -60,46 +60,33 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Workly</h1>
-          <p className="text-slate-400">Task Management System</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Workly</h1>
+          <p className="text-muted-foreground">Task Management System</p>
         </div>
 
-        <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
+        <Card>
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold text-white">
-              Welcome Back
-            </CardTitle>
-            <CardDescription className="text-slate-400">
-              Sign in to your account
-            </CardDescription>
+            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+            <CardDescription>Sign in to your account</CardDescription>
           </CardHeader>
 
           <CardContent>
             {/* Role Selection Tabs */}
             <Tabs value={role} onValueChange={setRole} className="mb-6">
-              <TabsList className="grid w-full grid-cols-3 bg-slate-700/50">
-                <TabsTrigger
-                  value="employee"
-                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-                >
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="employee">
                   <User className="h-4 w-4 mr-2" />
                   Employee
                 </TabsTrigger>
-                <TabsTrigger
-                  value="manager"
-                  className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-                >
+                <TabsTrigger value="manager">
                   <Briefcase className="h-4 w-4 mr-2" />
                   Manager
                 </TabsTrigger>
-                <TabsTrigger
-                  value="admin"
-                  className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-                >
+                <TabsTrigger value="admin">
                   <Shield className="h-4 w-4 mr-2" />
                   Admin
                 </TabsTrigger>
@@ -116,9 +103,7 @@ const Login = () => {
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-300">
-                  Email
-                </Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   name="email"
@@ -127,14 +112,11 @@ const Login = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-purple-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300">
-                  Password
-                </Label>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -144,12 +126,12 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-purple-500 pr-10"
+                    className="pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -160,11 +142,7 @@ const Login = () => {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-2.5"
-              >
+              <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -183,11 +161,11 @@ const Login = () => {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-center text-sm text-slate-400">
+            <div className="text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link
                 to="/register"
-                className="text-purple-400 hover:text-purple-300 font-medium"
+                className="font-medium underline underline-offset-4 hover:text-primary"
               >
                 Sign up
               </Link>

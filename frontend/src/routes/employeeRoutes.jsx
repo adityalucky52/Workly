@@ -8,7 +8,6 @@ import EmployeeMyTasks from "../pages/employee/tasks/MyTasks";
 import EmployeeTaskDetails from "../pages/employee/tasks/TaskDetails";
 import UpdateStatus from "../pages/employee/tasks/UpdateStatus";
 import TaskHistory from "../pages/employee/activity/TaskHistory";
-import Comments from "../pages/employee/activity/Comments";
 import EmployeeSettings from "../pages/employee/settings/EmployeeSettings";
 
 /**
@@ -52,10 +51,6 @@ export const employeeRoutes = {
     {
       path: "activity/history",
       element: <TaskHistory />,
-    },
-    {
-      path: "activity/comments",
-      element: <Comments />,
     },
 
     // ==================== Settings ====================

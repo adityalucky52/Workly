@@ -63,11 +63,6 @@ const activityItems = [
     icon: History,
     path: "/employee/activity/history",
   },
-  {
-    title: "Comments",
-    icon: MessageSquare,
-    path: "/employee/activity/comments",
-  },
 ];
 
 const settingsItems = [

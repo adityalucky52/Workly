@@ -27,7 +27,7 @@ import {
   Target,
   Loader2,
 } from "lucide-react";
-import { employeeAPI, adminAPI } from "../../services/api";
+import { employeeAPI, authAPI } from "../../services/api";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -51,7 +51,7 @@ const Dashboard = () => {
         setLoading(true);
         // Fetch current user and dashboard stats in parallel
         const [userRes, statsRes] = await Promise.all([
-          adminAPI.getCurrentUser(),
+          authAPI.getCurrentUser(),
           employeeAPI.getDashboardStats(),
         ]);
 
@@ -111,11 +111,18 @@ const Dashboard = () => {
 
   const getStatusBadge = (status) => {
     let variant = "secondary";
-    if (status === "Completed") variant = "default"; // or green custom
-    if (status === "In Progress") variant = "default";
-    if (status === "Overdue") variant = "destructive";
+    if (status === "completed") variant = "default";
+    if (status === "in-progress") variant = "default";
+    if (status === "overdue") variant = "destructive";
 
-    return <Badge variant={variant}>{status}</Badge>;
+    const displayStatus = status
+      ? status
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ")
+      : "";
+
+    return <Badge variant={variant}>{displayStatus}</Badge>;
   };
 
   return (

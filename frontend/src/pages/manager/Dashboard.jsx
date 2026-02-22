@@ -123,37 +123,44 @@ const Dashboard = () => {
   ];
 
   const getStatusBadge = (status) => {
+    const normalized = status?.toLowerCase() || "";
     const variants = {
-      Active: "default",
-      Pending: "secondary",
-      Inactive: "destructive",
+      active: "default",
+      pending: "secondary",
+      inactive: "destructive",
     };
-    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
+    const displayStatus =
+      status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase();
+    return (
+      <Badge variant={variants[normalized] || "default"}>{displayStatus}</Badge>
+    );
   };
 
   const getTaskStatusBadge = (status) => {
-    const variants = {
-      Completed: "default", // Usually finished/green
-      "In Progress": "default", // usually blue/primary
-      Pending: "secondary",
-      Overdue: "destructive",
-    };
-    // Map backend status to UI variants if needed
-    let variant = "secondary";
-    if (status === "Completed") variant = "default"; // or implement success/green variant
-    if (status === "In Progress") variant = "default";
-    if (status === "Overdue") variant = "destructive";
+    const normalized = status?.toLowerCase() || "";
 
-    // Using Lucide icons for visual flavor
+    let variant = "secondary";
+    if (normalized === "completed") variant = "default";
+    if (normalized === "in-progress") variant = "default";
+    if (normalized === "overdue") variant = "destructive";
+    if (normalized === "cancelled") variant = "outline";
+
     let icon = null;
-    if (status === "Completed")
+    if (normalized === "completed")
       icon = <CheckCircle2 className="mr-1 h-3 w-3" />;
-    if (status === "In Progress") icon = <Clock className="mr-1 h-3 w-3" />;
+    if (normalized === "in-progress") icon = <Clock className="mr-1 h-3 w-3" />;
+
+    const displayStatus =
+      normalized === "in-progress"
+        ? "In Progress"
+        : status
+          ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+          : "";
 
     return (
       <Badge variant={variant} className="flex w-fit items-center">
         {icon}
-        {status}
+        {displayStatus}
       </Badge>
     );
   };

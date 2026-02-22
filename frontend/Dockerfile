@@ -1,23 +1,32 @@
-
 # ------------------------------
-# Frontend Dockerfile for React/Vite
+# Frontend Dockerfile for React/Vite (Production)
 # ------------------------------
-FROM node:24-alpine
+# Stage 1: Build the Vite application
+FROM node:22-alpine as build
 
-# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Clean install dependencies
+RUN npm ci
 
-# Copy source code
+# Copy source code and build
 COPY . .
+RUN npm run build
 
-# Expose Vite dev server port
-EXPOSE 5173
+# Stage 2: Serve the optimized build with Nginx
+FROM nginx:alpine
 
-# Start the dev server exposed to all interfaces
-CMD ["npm", "run", "dev", "--", "--host"]
+# Copy the built assets to Nginx's web root directory
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Add a simple Nginx configuration to support SPA routing (React Router)
+RUN printf "server {\n    listen 80;\n    location / {\n        root /usr/share/nginx/html;\n        index index.html index.htm;\n        try_files \$uri \$uri/ /index.html;\n    }\n}\n" > /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

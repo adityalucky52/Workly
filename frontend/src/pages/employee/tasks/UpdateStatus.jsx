@@ -95,14 +95,8 @@ const UpdateStatus = () => {
       // Looking at backend code: validStatuses = ["pending", "in-progress", "review", "completed"];
       // It strictly checks lowercase. So I must convert.
 
-      let statusToSend = newStatus.toLowerCase().replace(" ", "-");
-      // Handle "Pending" -> "pending", "In Progress" -> "in-progress", "Completed" -> "completed"
-
-      // Wait, current data in DB might be PascalCase. Let's ensure we map consistently.
-      if (statusToSend === "in-progress") statusToSend = "in-progress"; // Correct
-
       await employeeAPI.updateTaskStatus(selectedTask, {
-        status: statusToSend,
+        status: newStatus,
       });
 
       // 2. Add Notes as Comment if present
@@ -173,10 +167,10 @@ const UpdateStatus = () => {
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    {/* Add Review if needed */}
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="review">Review</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -256,7 +250,7 @@ const UpdateStatus = () => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             {tasks
-              .filter((t) => t.status !== "Completed")
+              .filter((t) => t.status !== "completed")
               .slice(0, 6)
               .map((task) => (
                 <Card key={task._id}>
@@ -280,7 +274,7 @@ const UpdateStatus = () => {
                   </CardContent>
                 </Card>
               ))}
-            {tasks.filter((t) => t.status !== "Completed").length === 0 && (
+            {tasks.filter((t) => t.status !== "completed").length === 0 && (
               <p className="text-muted-foreground col-span-3 text-center">
                 No active tasks.
               </p>

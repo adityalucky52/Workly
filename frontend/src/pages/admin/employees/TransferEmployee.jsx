@@ -55,10 +55,6 @@ const TransferEmployee = () => {
     departments.find((d) => d.name === selectedDepartment)?.managers || [];
 
   const handleTransfer = () => {
-    console.log("Transferring to:", {
-      department: selectedDepartment,
-      manager: selectedManager,
-    });
     navigate(`/admin/employees/${id}`);
   };
 
