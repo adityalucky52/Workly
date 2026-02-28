@@ -1,7 +1,7 @@
-import { Manager } from "../modals/managerModel.js";
-import { User } from "../modals/userModel.js";
-import { Task } from "../modals/taskModel.js";
-import { Comment } from "../modals/commentModel.js";
+import { Manager } from "./manager.model.js";
+import { User } from "../user/user.model.js";
+import { Task } from "../task/task.model.js";
+import { Comment } from "../comment/comment.model.js";
 
 // ==================== DASHBOARD ====================
 

@@ -1,6 +1,6 @@
-import { Admin } from "../modals/adminModel.js";
-import { Manager } from "../modals/managerModel.js";
-import { User } from "../modals/userModel.js";
+import { Admin } from "../admin/admin.model.js";
+import { Manager } from "../manager/manager.model.js";
+import { User } from "../user/user.model.js";
 import bcrypt from "bcryptjs";
 
 // Get current user profile

@@ -12,8 +12,8 @@ import {
   deleteTask,
   getTeamPerformance,
   getTaskCompletion,
-} from "../controller/manager.controller.js";
-import { authMiddleware, requireRole } from "../middleware/authMiddleware.js";
+} from "./manager.controller.js";
+import { authMiddleware, requireRole } from "../../middleware/authMiddleware.js";
 
 const router = Router();
 

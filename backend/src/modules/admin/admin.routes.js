@@ -22,8 +22,8 @@ import {
   getTaskById,
   getSystemOverview,
   getWorkloadReport,
-} from "../controller/admin.controller.js";
-import { authMiddleware, requireRole } from "../middleware/authMiddleware.js";
+} from "./admin.controller.js";
+import { authMiddleware, requireRole } from "../../middleware/authMiddleware.js";
 
 const router = Router();
 

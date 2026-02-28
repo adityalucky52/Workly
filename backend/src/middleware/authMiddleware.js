@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import { Admin } from "../modals/adminModel.js";
-import { Manager } from "../modals/managerModel.js";
-import { User } from "../modals/userModel.js";
+import { Admin } from "../modules/admin/admin.model.js";
+import { Manager } from "../modules/manager/manager.model.js";
+import { User } from "../modules/user/user.model.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {

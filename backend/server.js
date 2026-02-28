@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import db from './database/db.js'
-import app from './app.js';
+import db from './src/config/db.js'
+import app from './src/app.js';
 
 
 app.listen(process.env.PORT,()=>{

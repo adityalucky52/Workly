@@ -1,4 +1,4 @@
-import { User } from "../modals/userModel.js";
+import { User } from "./user.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 

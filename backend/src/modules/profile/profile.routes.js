@@ -5,8 +5,8 @@ import {
   changePassword,
   getSettings,
   updateSettings,
-} from "../controller/profile.controller.js";
-import { authMiddleware } from "../middleware/authMiddleware.js";
+} from "./profile.controller.js";
+import { authMiddleware } from "../../middleware/authMiddleware.js";
 
 const router = Router();
 

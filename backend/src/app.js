@@ -5,13 +5,13 @@ import errorMiddleware from "./middleware/errorMiddleware.js";
 import limiter from "./middleware/ratelimitermiddleware.js";
 
 // Import routes
-import authRouter from "./routes/auth.Routes.js";
-import adminRouter from "./routes/admin.routes.js";
-import managerRouter from "./routes/manager.routes.js";
-import employeeRouter from "./routes/employee.routes.js";
-import profileRouter from "./routes/profile.routes.js";
-import groupRouter from "./routes/group.routes.js";
-import userRouter from "./routes/user.Routes.js";
+import authRouter from "./modules/auth/auth.routes.js";
+import adminRouter from "./modules/admin/admin.routes.js";
+import managerRouter from "./modules/manager/manager.routes.js";
+import employeeRouter from "./modules/employee/employee.routes.js";
+import profileRouter from "./modules/profile/profile.routes.js";
+import groupRouter from "./modules/group/group.routes.js";
+import userRouter from "./modules/user/user.routes.js";
 
 const app = express();
 

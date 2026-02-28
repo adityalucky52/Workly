@@ -8,8 +8,8 @@ import {
   addMembersToGroup,
   removeMembersFromGroup,
   getAvailableMembers,
-} from "../controller/group.controller.js";
-import { authMiddleware, requireRole } from "../middleware/authMiddleware.js";
+} from "./group.controller.js";
+import { authMiddleware, requireRole } from "../../middleware/authMiddleware.js";
 
 const router = Router();
 

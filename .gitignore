@@ -90,3 +90,6 @@ dump/
 # Custom Scripts & Development Tools
 backend/scripts/
 backend/test-data/
+
+# Bruno API Client
+bruno/

@@ -1,6 +1,6 @@
-import { Group } from "../modals/groupModel.js";
-import { Manager } from "../modals/managerModel.js";
-import { User } from "../modals/userModel.js";
+import { Group } from "./group.model.js";
+import { Manager } from "../manager/manager.model.js";
+import { User } from "../user/user.model.js";
 
 // Create a new group
 export const createGroup = async (req, res, next) => {
